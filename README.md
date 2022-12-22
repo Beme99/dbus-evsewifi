@@ -36,6 +36,7 @@ Within the project there is a file `/data/dbus-evsewifi/config.ini` - just chang
 | DEFAULT  | AccessType | Fixed value 'OnPremise' |
 | DEFAULT  | SignOfLifeLog  | Time in minutes how often a status is added to the log-file `current.log` with log-level INFO |
 | DEFAULT  | Deviceinstance | Unique ID identifying the shelly 1pm in Venus OS |
+| DEFAULT  | Position | Position of EVSE-WiFi (0: AC-Output 1: AC-IN)
 | ONPREMISE  | Host | IP of EVSE-WiFi 2.0
 
 
