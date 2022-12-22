@@ -2,7 +2,7 @@
 Integrate EVSE-WiFi 2.0 (https://shop.evse-wifi.de/produkt/evse-wifi-2-0-base/) into Victron Energies Venus OS
 
 ## Purpose
-This script supports reading EV charger values from EVSE-WiFi 2.0. Writing values is supported for "Enable charging"and  "Charging current" 
+This script supports reading EV charger values from EVSE-WiFi 2.0. Writing values is supported for "Enable charging"and  "Charging current", assumed that mode "Remote Controlled" is selected in EVSE-WiFi 2.0.
 
 ### Pictures
 ![Remote Console - Overview](img/1-DeviceList.png) 
@@ -31,12 +31,12 @@ rm main.zip
 ### Change config.ini
 Within the project there is a file `/data/dbus-evsewifi/config.ini` - just change the values - most important is the deviceinstance under "DEFAULT" and host in section "ONPREMISE". More details below:
 
-| Section  | Config vlaue | Explanation |
+| Section  | Config valDankue | Explanation |
 | ------------- | ------------- | ------------- |
 | DEFAULT  | AccessType | Fixed value 'OnPremise' |
 | DEFAULT  | SignOfLifeLog  | Time in minutes how often a status is added to the log-file `current.log` with log-level INFO |
 | DEFAULT  | Deviceinstance | Unique ID identifying the shelly 1pm in Venus OS |
-| ONPREMISE  | Host | IP or hostname of on-premise Shelly 3EM web-interface |
+| ONPREMISE  | Host | IP of EVSE-WiFi 2.0
 
 
 ## Usefull links
