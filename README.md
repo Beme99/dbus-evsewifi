@@ -14,22 +14,22 @@ This script supports reading EV charger values from EVSE-WiFi 2.0. Writing value
 
 ## Install & Configuration
 ### Get the code
-Just grap a copy of the main branche and copy them to a folder under `/data/` e.g. `/data/dbus-evsecharger`.
+Just grap a copy of the main branche and copy them to a folder under `/data/` e.g. `/data/dbus-evsewifi`.
 After that call the install.sh script.
 
 The following script should do everything for you:
 ```
-wget https://github.com/JuWorkshop/dbus-evsecharger/archive/refs/heads/main.zip
-unzip main.zip "dbus-evsecharger-main/*" -d /data
-mv /data/dbus-evsecharger-main /data/dbus-evsecharger
-chmod a+x /data/dbus-evsecharger/install.sh
-/data/dbus-evsecharger/install.sh
+wget https://github.com/Beme99/dbus-evsewifi/archive/refs/heads/main.zip
+unzip main.zip "dbus-evsewifi-main/*" -d /data
+mv /data/dbus-evsewifi-main /data/dbus-evsewifi
+chmod a+x /data/dbus-evsewifi/install.sh
+/data/dbus-evsewifi/install.sh
 rm main.zip
 ```
-⚠️ Check configuration after that - because service is already installed an running and with wrong connection data (host) you will spam the log-file
+⚠️ Check configuration after that - because service is already installed and running and with wrong connection data (host) you will spam the log-file
 
 ### Change config.ini
-Within the project there is a file `/data/dbus-evsecharger/config.ini` - just change the values - most important is the deviceinstance under "DEFAULT" and host in section "ONPREMISE". More details below:
+Within the project there is a file `/data/dbus-evsewifi/config.ini` - just change the values - most important is the deviceinstance under "DEFAULT" and host in section "ONPREMISE". More details below:
 
 | Section  | Config vlaue | Explanation |
 | ------------- | ------------- | ------------- |
@@ -40,7 +40,8 @@ Within the project there is a file `/data/dbus-evsecharger/config.ini` - just ch
 
 
 ## Usefull links
-Many thanks. @vikt0rm, @fabian-lauer and @trixing project:
+Many thanks. @JUWorkshop, @vikt0rm, @fabian-lauer and @trixing project:
+- https://github.com/JuWorkshop/dbus-evsecharger
 - https://github.com/trixing/venus.dbus-twc3
 - https://github.com/fabian-lauer/dbus-shelly-3em-smartmeter
 - https://github.com/vikt0rm/dbus-goecharger
