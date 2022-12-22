@@ -1,8 +1,8 @@
-# dbus-open-evse
-Integrate Open_EVSE charger into Victron Energies Venus OS
+# dbus-evsewifi
+Integrate EVSE-WiFi 2.0 (https://shop.evse-wifi.de/produkt/evse-wifi-2-0-base/) into Victron Energies Venus OS
 
 ## Purpose
-This script supports reading EV charger values from openEVSE base charger. Writing values is supported for "Enable charging"and  "Charging current" 
+This script supports reading EV charger values from EVSE-WiFi 2.0. Writing values is supported for "Enable charging"and  "Charging current" 
 
 ### Pictures
 ![Remote Console - Overview](img/1-DeviceList.png) 
