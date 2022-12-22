@@ -21,7 +21,7 @@ from vedbus import VeDbusService
 
 
 class DbusEvseWifiService:
-    def __init__(self, servicename, paths, productname='EVSE-WiFi', connection='EVSE-WiFi MQTT'):
+    def __init__(self, servicename, paths, productname='EVSE-WiFi', connection='EVSE-WiFi JSON API'):
         config = self._getConfig()
         deviceinstance = int(config['DEFAULT']['Deviceinstance'])
 
@@ -51,11 +51,12 @@ class DbusEvseWifiService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)  #
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', productname)
-        self._dbusservice.add_path('/FirmwareVersion', int(data['divert_update']))
         self._dbusservice.add_path('/HardwareVersion', 2)
-        self._dbusservice.add_path('/Serial', data['comm_success'])
+        self._dbusservice.add_path('/FirmwareVersion', "1.0")
+        self._dbusservice.add_path('/Serial', 1)
         self._dbusservice.add_path('/Connected', 1)
         self._dbusservice.add_path('/UpdateIndex', 0)
+        self._dbusservice.add_path('/Position', 1) # 0: AC-Output 1: AC-Input
 
         # add paths without units
         for path in paths_wo_unit:
@@ -74,7 +75,7 @@ class DbusEvseWifiService:
         self._chargingTime = 0.0
 
         # add _update function 'timer'
-        gobject.timeout_add(2000, self._update)  # pause 2sec before the next request
+        gobject.timeout_add(10000, self._update)  # pause 2sec before the next request
 
         # add _signOfLife 'timer' to get feedback in log every 5minutes
         gobject.timeout_add(self._getSignOfLifeInterval() * 60 * 1000, self._signOfLife)
@@ -163,22 +164,22 @@ class DbusEvseWifiService:
             # get data from go-eCharger
             datacomplete = self._getEvseWifiData()
             data=datacomplete["list"][0]
-
+            
             # send data to DBus
-	        self._dbusservice['/Ac/L1/Power'] = float((data['actualPower']) / 3)
-            self._dbusservice['/Ac/L2/Power'] = float((data['actualPower']) / 3)
-            self._dbusservice['/Ac/L3/Power'] = float((data['actualPower']) / 3)
-            self._dbusservice['/Ac/Power'] = int(data['actualPower'])
+            self._dbusservice['/Ac/L1/Power'] = float((data['actualPower']*1000) / 3.0)
+            self._dbusservice['/Ac/L2/Power'] = float((data['actualPower']*1000) / 3.0)
+            self._dbusservice['/Ac/L3/Power'] = float((data['actualPower']*1000) / 3.0)
+            self._dbusservice['/Ac/Power'] = int(data['actualPower']*1000)
             self._dbusservice['/Ac/Voltage'] = 230
             self._dbusservice['/Current'] = float(data['actualCurrent'])
-            self._dbusservice['/Ac/Energy/Forward'] = float(data['wattsec'] / 3600000)  # int(float(data['eto']) / 10.0)
+            self._dbusservice['/Ac/Energy/Forward'] = float(data['energy'])  # int(float(data['eto']) / 10.0)
             if int(data['vehicleState']) == 1 or int(data['vehicleState']) == 3:
                 self._dbusservice['/StartStop'] = 1
             else:
                 self._dbusservice['/StartStop'] = 0
 
-#            self._dbusservice['/StartStop'] = int(data['divertmode'])
-#            self._dbusservice['/SetCurrent'] = int(data['pilot'])
+            #self._dbusservice['/StartStop'] = int(data['divertmode'])
+            #self._dbusservice['/SetCurrent'] = int(data['pilot'])
             self._dbusservice['/MaxCurrent'] = int(data['maxCurrent'])
 
             # update chargingTime, increment charge time only on active charging (2), reset when no car connected (1)
@@ -189,7 +190,7 @@ class DbusEvseWifiService:
             #    self._chargingTime = 0
         
             #self._dbusservice['/ChargingTime'] = int(self._chargingTime)int(data['maxCurrent'])
-            self._dbusservice['/ChargingTime'] = int(data['duration'])
+            self._dbusservice['/ChargingTime'] = int(data['duration'] / 1000)
 
             self._dbusservice['/Mode'] = 0  # Manual, no control
             #self._dbusservice['/MCU/Temperature'] = int(data['temp1'])
@@ -204,8 +205,8 @@ class DbusEvseWifiService:
                 status = 1
             elif int(data['vehicleState']) == 3:
                 status = 2
-            elif int(data['vehicleState']) ==5:
-               status = 8
+            elif int(data['vehicleState']) == 5:
+                status = 8
             #elif int(data['state']) ==255:
             #    status = 6
             #elif int(data['state']) ==254:
