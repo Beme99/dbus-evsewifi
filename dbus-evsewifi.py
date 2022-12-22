@@ -52,11 +52,11 @@ class DbusEvseWifiService:
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', productname)
         self._dbusservice.add_path('/HardwareVersion', 2)
-        self._dbusservice.add_path('/FirmwareVersion', "1.0")
+        self._dbusservice.add_path('/FirmwareVersion', "Unknown")
         self._dbusservice.add_path('/Serial', 1)
         self._dbusservice.add_path('/Connected', 1)
         self._dbusservice.add_path('/UpdateIndex', 0)
-        self._dbusservice.add_path('/Position', 1) # 0: AC-Output 1: AC-Input
+        self._dbusservice.add_path('/Position', int(config['DEFAULT']['Position'])) # 0: AC-Output 1: AC-Input
 
         # add paths without units
         for path in paths_wo_unit:
