@@ -165,12 +165,11 @@ class DbusEvseWifiService:
             data=datacomplete["list"][0]
 
             # send data to DBus
-	        voltage = 230
-            self._dbusservice['/Ac/L1/Power'] = float((data['actualPower']) / 3)
+	        self._dbusservice['/Ac/L1/Power'] = float((data['actualPower']) / 3)
             self._dbusservice['/Ac/L2/Power'] = float((data['actualPower']) / 3)
             self._dbusservice['/Ac/L3/Power'] = float((data['actualPower']) / 3)
             self._dbusservice['/Ac/Power'] = int(data['actualPower'])
-            self._dbusservice['/Ac/Voltage'] = voltage
+            self._dbusservice['/Ac/Voltage'] = 230
             self._dbusservice['/Current'] = float(data['actualCurrent'])
             self._dbusservice['/Ac/Energy/Forward'] = float(data['wattsec'] / 3600000)  # int(float(data['eto']) / 10.0)
             if int(data['vehicleState']) == 1 or int(data['vehicleState']) == 3:
