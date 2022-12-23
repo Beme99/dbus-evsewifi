@@ -32,8 +32,6 @@ class DbusEvseWifiService:
 
         paths_wo_unit = [
             '/Status',
-            # value 'state' EVSE State - 1 Not Connected - 2 Connected - 3 Charging - 4 Error, 254 - sleep, 255 - disabled
-		# old_goecharger 1: charging station ready, no vehicle 2: vehicle loads 3: Waiting for vehicle 4: Charge finished, vehicle still connected
             '/Mode'
         ]
 
@@ -52,11 +50,11 @@ class DbusEvseWifiService:
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', productname)
         self._dbusservice.add_path('/HardwareVersion', 2)
-        self._dbusservice.add_path('/FirmwareVersion', "Unknown")
+        self._dbusservice.add_path('/FirmwareVersion', 'Unknown')
         self._dbusservice.add_path('/Serial', 1)
         self._dbusservice.add_path('/Connected', 1)
         self._dbusservice.add_path('/UpdateIndex', 0)
-        self._dbusservice.add_path('/Position', int(config['DEFAULT']['Position'])) # 0: AC-Output 1: AC-Input
+        self._dbusservice.add_path('/Position', int(config['DEFAULT']['ACPosition'])) # 0: AC-Output / 1: AC-Input
 
         # add paths without units
         for path in paths_wo_unit:
@@ -87,7 +85,7 @@ class DbusEvseWifiService:
 
     def _getSignOfLifeInterval(self):
         config = self._getConfig()
-        value = config['DEFAULT']['SignOfLifeLog']
+        value = config['DEFAULT']['SignOfLifeLogInterval']
 
         if not value:
             value = 0
@@ -96,24 +94,12 @@ class DbusEvseWifiService:
 
     def _getEvseWifiStatusUrl(self):
         config = self._getConfig()
-        accessType = config['DEFAULT']['AccessType']
-
-        if accessType == 'OnPremise':
-            URL = "http://%s/getParameters" % (config['ONPREMISE']['Host'])
-        else:
-            raise ValueError("AccessType %s is not supported" % (config['DEFAULT']['AccessType']))
-
+        URL = "http://%s/getParameters" % (config['DEFAULT']['Host'])
         return URL
 
     def _getEvseWifiMqttPayloadUrl(self, parameter, value):
         config = self._getConfig()
-        accessType = config['DEFAULT']['AccessType']
-
-        if accessType == 'OnPremise':
-            URL = "http://%s/r?json=1&rapi=$%s%s" % (config['ONPREMISE']['Host'], parameter, value)
-        else:
-            raise ValueError("AccessType %s is not supported" % (config['DEFAULT']['AccessType']))
-
+        URL = "http://%s/r?json=1&rapi=$%s%s" % (config['DEFAULT']['Host'], parameter, value)
         return URL
 
     def _setEvseWifiValue(self, parameter, value):
@@ -142,7 +128,7 @@ class DbusEvseWifiService:
 
         # check for response
         if not request_data:
-            raise ConnectionError("No response from Evse-Charger - %s" % (URL))
+            raise ConnectionError("No response from EVSE-WiFi - %s" % (URL))
 
         json_data = request_data.json()
 
@@ -166,35 +152,28 @@ class DbusEvseWifiService:
             data=datacomplete["list"][0]
             
             # send data to DBus
+            if 
+            
             self._dbusservice['/Ac/L1/Power'] = float((data['actualPower']*1000) / 3.0)
             self._dbusservice['/Ac/L2/Power'] = float((data['actualPower']*1000) / 3.0)
             self._dbusservice['/Ac/L3/Power'] = float((data['actualPower']*1000) / 3.0)
             self._dbusservice['/Ac/Power'] = int(data['actualPower']*1000)
             self._dbusservice['/Ac/Voltage'] = 230
             self._dbusservice['/Current'] = float(data['actualCurrent'])
-            self._dbusservice['/Ac/Energy/Forward'] = float(data['energy'])  # int(float(data['eto']) / 10.0)
+            self._dbusservice['/Ac/Energy/Forward'] = float(data['energy'])
             if int(data['vehicleState']) == 1 or int(data['vehicleState']) == 3:
                 self._dbusservice['/StartStop'] = 1
             else:
                 self._dbusservice['/StartStop'] = 0
 
             #self._dbusservice['/StartStop'] = int(data['divertmode'])
-            #self._dbusservice['/SetCurrent'] = int(data['pilot'])
+            self._dbusservice['/SetCurrent'] = int(data['actualCurrent'])
             self._dbusservice['/MaxCurrent'] = int(data['maxCurrent'])
 
-            # update chargingTime, increment charge time only on active charging (2), reset when no car connected (1)
-            timeDelta = time.time() - self._lastUpdate
-            #if int(data['state']) == 3 and self._lastUpdate > 0:  # vehicle loads
-            #    self._chargingTime += timeDelta
-            #elif int(data['state']) == 1:  # charging station ready, no vehicle
-            #    self._chargingTime = 0
-        
-            #self._dbusservice['/ChargingTime'] = int(self._chargingTime)int(data['maxCurrent'])
             self._dbusservice['/ChargingTime'] = int(data['duration'] / 1000)
 
             self._dbusservice['/Mode'] = 0  # Manual, no control
-            #self._dbusservice['/MCU/Temperature'] = int(data['temp1'])
-
+            
 	# 'state' EVSE State - 1 Not Connected - 2 Connected - 3 Charging - 4 Error, 254 - sleep, 255 - disabled
             # value 'car' 1: charging station ready, no vehicle 2: vehicle loads 3: Waiting for vehicle 4: Charge finished, vehicle still connected
 	# 0:EVdisconnected; 1:Connected; 2:Charging; 3:Charged; 4:Wait sun; 5:Wait RFID; 6:Wait enable; 7:Low SOC; 8:Ground error; 9:Welded contacts error; defaut:Unknown;
@@ -207,10 +186,6 @@ class DbusEvseWifiService:
                 status = 2
             elif int(data['vehicleState']) == 5:
                 status = 8
-            #elif int(data['state']) ==255:
-            #    status = 6
-            #elif int(data['state']) ==254:
-            #    status = 4
             self._dbusservice['/Status'] = status
 
             # logging
@@ -286,7 +261,6 @@ def main():
                 '/Current': {'initial': 0, 'textformat': _a},
                 '/SetCurrent': {'initial': 0, 'textformat': _a},
                 '/MaxCurrent': {'initial': 0, 'textformat': _a},
-                '/MCU/Temperature': {'initial': 0, 'textformat': _degC},
                 '/StartStop': {'initial': 0, 'textformat': lambda p, v: (str(v))}
             }
         )
