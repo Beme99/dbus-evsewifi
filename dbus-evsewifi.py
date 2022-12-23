@@ -99,7 +99,7 @@ class DbusEvseWifiService:
 
     def _getEvseWifiMqttPayloadUrl(self, parameter, value):
         config = self._getConfig()
-        URL = "http://%s/r?json=1&rapi=$%s%s" % (config['DEFAULT']['Host'], parameter, value)
+        URL = "http://%s/setCurrent?%s=%s" % (config['DEFAULT']['Host'], parameter, value)
         return URL
 
     def _setEvseWifiValue(self, parameter, value):
@@ -147,41 +147,41 @@ class DbusEvseWifiService:
 
     def _update(self):
         try:
+            config = self._getConfig()
+            
             # get data from go-eCharger
             datacomplete = self._getEvseWifiData()
             data=datacomplete["list"][0]
             
-            # send data to DBus
-            if 
-            
+            # send data to DBus        
             self._dbusservice['/Ac/L1/Power'] = float((data['actualPower']*1000) / 3.0)
             self._dbusservice['/Ac/L2/Power'] = float((data['actualPower']*1000) / 3.0)
             self._dbusservice['/Ac/L3/Power'] = float((data['actualPower']*1000) / 3.0)
             self._dbusservice['/Ac/Power'] = int(data['actualPower']*1000)
             self._dbusservice['/Ac/Voltage'] = 230
-            self._dbusservice['/Current'] = float(data['actualCurrent'])
+            self._dbusservice['/Current'] = int(data['actualCurrent'])
             self._dbusservice['/Ac/Energy/Forward'] = float(data['energy'])
-            if int(data['vehicleState']) == 1 or int(data['vehicleState']) == 3:
-                self._dbusservice['/StartStop'] = 1
-            else:
+            if int(data['actualCurrent']) == 0:
                 self._dbusservice['/StartStop'] = 0
+            else:
+                self._dbusservice['/StartStop'] = 1
 
-            #self._dbusservice['/StartStop'] = int(data['divertmode'])
             self._dbusservice['/SetCurrent'] = int(data['actualCurrent'])
             self._dbusservice['/MaxCurrent'] = int(data['maxCurrent'])
 
             self._dbusservice['/ChargingTime'] = int(data['duration'] / 1000)
 
-            self._dbusservice['/Mode'] = 0  # Manual, no control
+            self._dbusservice['/Mode'] = int(config['DEFAULT']['automaticMode'])
             
-	# 'state' EVSE State - 1 Not Connected - 2 Connected - 3 Charging - 4 Error, 254 - sleep, 255 - disabled
-            # value 'car' 1: charging station ready, no vehicle 2: vehicle loads 3: Waiting for vehicle 4: Charge finished, vehicle still connected
-	# 0:EVdisconnected; 1:Connected; 2:Charging; 3:Charged; 4:Wait sun; 5:Wait RFID; 6:Wait enable; 7:Low SOC; 8:Ground error; 9:Welded contacts error; defaut:Unknown;
+	# 'vehicleState' EVSE-WiFi states: Fahrzeugstatus (1: bereit | 2: Fahrzeug angeschlossen | 3: Fahrzeug lädt | 5: Fehler)
+	# Victron states: 0:EVdisconnected; 1:Connected; 2:Charging; 3:Charged; 4:Wait sun; 5:Wait RFID; 6:Wait enable; 7:Low SOC; 8:Ground error; 9:Welded contacts error; defaut:Unknown;
             status = 0
-            if int(data['vehicleState']) == 1:
+            if int(data['vehicleState']) == 1 :
                 status = 0
-            elif int(data['vehicleState']) == 2:
+            elif int(data['vehicleState']) == 2 and int(data['actualCurrent']) == 0:
                 status = 1
+            elif int(data['vehicleState']) == 2 and int(data['actualCurrent']) > 0:
+                status = 3
             elif int(data['vehicleState']) == 3:
                 status = 2
             elif int(data['vehicleState']) == 5:
@@ -211,11 +211,12 @@ class DbusEvseWifiService:
         logging.info("someone else updated %s to %s" % (path, value))
 
         if path == '/SetCurrent':
-            return self._setEvseWifiValue('SC+', value)
+            return self._setEvseWifiValue('current', value)
         elif path == '/StartStop':
-            return self._setEvseWifiValue('F', '1') #F1
-        elif path == '/MaxCurrent':
-            return self._setEvseWifiValue('ama', value)
+            if value == 0:
+                return self._setEvseWifiValue('current', '0') #Stop
+            elif value == 1:
+                return self._setEvseWifiValue('current', int(self._dbusservice['/MaxCurrent'])) #Start
         else:
             logging.info("mapping for evcharger path %s does not exist" % (path))
             return False
